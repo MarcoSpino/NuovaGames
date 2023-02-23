@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/fragment_home"
+
+        android:title="home" />
+
+    <item
+        android:id="@+id/fragment_ricerca"
+
+        android:title="ricera" />
+
+    <item
+        android:id="@+id/fragment_preferiti"
+
+        android:title="preferiti" />
+
+    <item
+        android:id="@+id/fragment_profilo"
+
+        android:title="profilo" />
+
+
+</menu>

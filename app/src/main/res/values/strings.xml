@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">NuovaGames</string>
+    <string name="news_api_key">4c7dbf77229b59e4317ed026ad2d4db550540fbf</string>
+    <string name="error_retrieving_news">error_retrieving</string>
+    <string name="data_read_from_local_database">data_read_from_local_database</string>
+    <string name="news_added_to_favorite_list_message">news_added_to_favorite_list_message</string>
+    <string name="news_removed_from_favorite_list_message">news_removed_from_favorite_list_message</string>
+    <string name="news_list_item_date">data</string>
+    <string name="fav_daelete_content_description">delete_descri</string>
+    <string name="news_list_item_title">titolo</string>
+    <string name="fav_content_description">fav_descr</string>
+</resources>
