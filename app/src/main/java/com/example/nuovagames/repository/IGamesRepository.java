@@ -1,14 +1,17 @@
 package com.example.nuovagames.repository;
 
+import androidx.lifecycle.MutableLiveData;
+
 import com.example.nuovagames.model.Games;
+import com.example.nuovagames.model.Result;
 
 public interface IGamesRepository {
 
-    void fetchNews(long lastUpdate);
+    MutableLiveData<Result> fetchNews(long lastUpdate);
+
+    MutableLiveData<Result> getFavoriteNews();
 
     void updateNews(Games news);
-
-    void getFavoriteNews();
 
     void deleteFavoriteNews();
 }

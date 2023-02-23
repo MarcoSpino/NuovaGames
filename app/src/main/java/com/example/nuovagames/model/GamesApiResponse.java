@@ -14,6 +14,11 @@ public class GamesApiResponse implements Parcelable {
 
     public GamesApiResponse() {}
 
+
+    public GamesApiResponse(List<Games> results) {
+        this.results = results;
+    }
+
     public GamesApiResponse(String error, int number_of_total_results, List<Games> results) {
         this.error = error;
         this.number_of_total_results = number_of_total_results;

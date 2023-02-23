@@ -1,4 +1,6 @@
-package com.example.nuovagames.database;
+package com.example.nuovagames;
+
+
 
 import android.content.Context;
 
@@ -6,11 +8,11 @@ import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
 
+import com.example.nuovagames.database.GamesDao;
 import com.example.nuovagames.model.Games;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
 
 /**
  * Main access point for the underlying connection to the local database.
@@ -31,7 +33,7 @@ public abstract class GamesRoomDatabase extends RoomDatabase {
             synchronized (GamesRoomDatabase.class) {
                 if (INSTANCE == null) {
                     INSTANCE = Room.databaseBuilder(context.getApplicationContext(),
-                            GamesRoomDatabase.class, "db_game").build();
+                            GamesRoomDatabase.class, "db_games").build();
                 }
             }
         }

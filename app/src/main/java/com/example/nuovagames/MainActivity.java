@@ -1,6 +1,8 @@
 package com.example.nuovagames;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
@@ -25,10 +27,12 @@ public class MainActivity extends AppCompatActivity {
         BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
 
         AppBarConfiguration appBarConfiguration = new AppBarConfiguration.Builder(
-                R.id.fragment_home, R.id.fragment_preferiti,
-                R.id.fragment_ricerca, R.id.fragment_profilo).build();
+                R.id.fragment_home, R.id.fragment_ricerca,
+                R.id.fragment_preferiti, R.id.fragment_profilo).build();
 
         // For the BottomNavigationView
         NavigationUI.setupWithNavController(bottomNav, navController);
+
+
     }
 }

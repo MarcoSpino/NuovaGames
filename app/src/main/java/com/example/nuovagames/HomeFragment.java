@@ -1,6 +1,17 @@
 package com.example.nuovagames;
 
+import static com.example.nuovagames.Constanti.LAST_UPDATE;
+
 import android.os.Bundle;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.core.view.MenuProvider;
+import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -9,15 +20,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.core.view.MenuProvider;
-import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
 import com.example.nuovagames.adapter.NewsRecyclerViewAdapter;
 import com.example.nuovagames.model.Games;
+import com.example.nuovagames.model.Result;
 import com.example.nuovagames.repository.GamesRepository;
 import com.example.nuovagames.repository.IGamesRepository;
 import com.google.android.material.snackbar.Snackbar;
@@ -25,14 +30,17 @@ import com.google.android.material.snackbar.Snackbar;
 import java.util.ArrayList;
 import java.util.List;
 
-public class HomeFragment extends Fragment implements ResponseCallback{
+/**
+ * Fragment that shows the news associated with a Country.
+ */
+public class HomeFragment extends Fragment{
+
     private static final String TAG = HomeFragment.class.getSimpleName();
 
     private List<Games> newsList;
-    private IGamesRepository iNewsRepository;
     private NewsRecyclerViewAdapter newsRecyclerViewAdapter;
     private ProgressBar progressBar;
-
+    private NewsViewModel newsViewModel;
 
     public HomeFragment() {
         // Required empty public constructor
@@ -52,8 +60,18 @@ public class HomeFragment extends Fragment implements ResponseCallback{
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-            iNewsRepository =
-                    new GamesRepository(requireActivity().getApplication(), this);
+        IGamesRepository newsRepositoryWithLiveData =
+                ServiceLocator.getInstance().getNewsRepository(
+                        requireActivity().getApplication(),
+                        requireActivity().getApplication().getResources().getBoolean(R.bool.debug_mode)
+                );
+
+        // This is the way to create a ViewModel with custom parameters
+        // (see NewsViewModelFactory class for the implementation details)
+        newsViewModel = new ViewModelProvider(
+                requireActivity(),
+                new NewsViewModelFactory(newsRepositoryWithLiveData)).get(NewsViewModel.class);
+
         newsList = new ArrayList<>();
     }
 
@@ -67,6 +85,7 @@ public class HomeFragment extends Fragment implements ResponseCallback{
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
         requireActivity().addMenuProvider(new MenuProvider() {
             @Override
             public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater menuInflater) {
@@ -97,50 +116,42 @@ public class HomeFragment extends Fragment implements ResponseCallback{
                     @Override
                     public void onFavoriteButtonPressed(int position) {
                         newsList.get(position).setFavorite(!newsList.get(position).isFavorite());
-                        iNewsRepository.updateNews(newsList.get(position));
+                        newsViewModel.updateNews(newsList.get(position));
                     }
                 });
         recyclerViewCountryNews.setLayoutManager(layoutManager);
         recyclerViewCountryNews.setAdapter(newsRecyclerViewAdapter);
 
+
         String lastUpdate = "0";
 
+
         progressBar.setVisibility(View.VISIBLE);
-        iNewsRepository.fetchNews(Long.parseLong(lastUpdate));
-    }
-    @Override
-    public void onSuccess(List<Games> newsList, long lastUpdate) {
-        if (newsList != null) {
-            this.newsList.clear();
-            this.newsList.addAll(newsList);
-        }
 
-        requireActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                newsRecyclerViewAdapter.notifyDataSetChanged();
-                progressBar.setVisibility(View.GONE);
-            }
-        });
-    }
+        // Observe the LiveData associated with the MutableLiveData containing all the news
+        // returned by the method getNews(String, long) of NewsViewModel class.
+        // Pay attention to which LifecycleOwner you give as value to
+        // the method observe(LifecycleOwner, Observer).
+        // In this case, getViewLifecycleOwner() refers to
+        // androidx.fragment.app.FragmentViewLifecycleOwner and not to the Fragment itself.
+        // You can read more details here: https://stackoverflow.com/a/58663143/4255576
+        newsViewModel.getNews(Long.parseLong(lastUpdate)).observe(getViewLifecycleOwner(),
+                result -> {
+                    if (result.isSuccess()) {
+                        int initialSize = this.newsList.size();
+                        this.newsList.clear();
+                        this.newsList.addAll(((Result.Success) result).getData().getResults());
+                        newsRecyclerViewAdapter.notifyItemRangeInserted(initialSize, this.newsList.size());
+                        progressBar.setVisibility(View.GONE);
+                    } else {
+                        ErrorMessagesUtil errorMessagesUtil =
+                                new ErrorMessagesUtil(requireActivity().getApplication());
+                        Snackbar.make(view, errorMessagesUtil.
+                                        getErrorMessage(((Result.Error)result).getMessage()),
+                                Snackbar.LENGTH_SHORT).show();
+                        progressBar.setVisibility(View.GONE);
+                    }
+                });
 
-    @Override
-    public void onFailure(String errorMessage) {
-        progressBar.setVisibility(View.GONE);
-        Snackbar.make(requireActivity().findViewById(android.R.id.content),
-                errorMessage, Snackbar.LENGTH_LONG).show();
-    }
-
-    @Override
-    public void onNewsFavoriteStatusChanged(Games news) {
-        if (news.isFavorite()) {
-            Snackbar.make(requireActivity().findViewById(android.R.id.content),
-                    getString(R.string.news_added_to_favorite_list_message),
-                    Snackbar.LENGTH_LONG).show();
-        } else {
-            Snackbar.make(requireActivity().findViewById(android.R.id.content),
-                    getString(R.string.news_removed_from_favorite_list_message),
-                    Snackbar.LENGTH_LONG).show();
-        }
     }
 }

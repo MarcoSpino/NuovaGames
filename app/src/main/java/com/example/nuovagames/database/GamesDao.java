@@ -47,8 +47,8 @@ public interface GamesDao {
     void deleteAllWithoutQuery(Games... games);
 
     @Update
-    void updateSingleFavoriteNews(Games games);
+    int updateSingleFavoriteNews(Games games);
 
     @Update
-    void updateListFavoriteNews(List<Games> games);
+    int updateListFavoriteNews(List<Games> news);
 }

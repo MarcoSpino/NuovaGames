@@ -1,18 +1,24 @@
 package com.example.nuovagames.repository;
 
+import static com.example.nuovagames.Constanti.FRESH_TIMEOUT;
+
 import android.app.Application;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.lifecycle.MutableLiveData;
 
 import com.example.nuovagames.R;
 import com.example.nuovagames.ResponseCallback;
 import com.example.nuovagames.ServiceLocator;
 import com.example.nuovagames.database.GamesDao;
-import com.example.nuovagames.database.GamesRoomDatabase;
 import com.example.nuovagames.model.Games;
 import com.example.nuovagames.model.GamesApiResponse;
+import com.example.nuovagames.model.Result;
 import com.example.nuovagames.service.GamesApiService;
+import com.example.nuovagames.source.BaseNewsLocalDataSource;
+import com.example.nuovagames.source.BaseNewsRemoteDataSource;
+import com.example.nuovagames.source.GamesCallback;
 
 import java.util.List;
 
@@ -20,127 +26,118 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class GamesRepository implements IGamesRepository{
+public class GamesRepository implements IGamesRepository, GamesCallback {
 
     private static final String TAG = GamesRepository.class.getSimpleName();
 
-    private final Application application;
-    private final GamesApiService newsApiService;
-    private final GamesDao newsDao;
-    private final ResponseCallback responseCallback;
+    private final MutableLiveData<Result> allNewsMutableLiveData;
+    private final MutableLiveData<Result> favoriteNewsMutableLiveData;
+    private final BaseNewsRemoteDataSource newsRemoteDataSource;
+    private final BaseNewsLocalDataSource newsLocalDataSource;
 
-    public GamesRepository(Application application, ResponseCallback responseCallback) {
-        this.application = application;
-        this.newsApiService = ServiceLocator.getInstance().getNewsApiService();
-        GamesRoomDatabase newsRoomDatabase = ServiceLocator.getInstance().getNewsDao(application);
-        this.newsDao = newsRoomDatabase.newsDao();
-        this.responseCallback = responseCallback;
+    public GamesRepository(BaseNewsRemoteDataSource newsRemoteDataSource,
+                                      BaseNewsLocalDataSource newsLocalDataSource) {
+
+        allNewsMutableLiveData = new MutableLiveData<>();
+        favoriteNewsMutableLiveData = new MutableLiveData<>();
+        this.newsRemoteDataSource = newsRemoteDataSource;
+        this.newsLocalDataSource = newsLocalDataSource;
+        this.newsRemoteDataSource.setNewsCallback(this);
+        this.newsLocalDataSource.setNewsCallback(this);
     }
 
     @Override
-    public void fetchNews(long lastUpdate) {
+    public MutableLiveData<Result> fetchNews(long lastUpdate) {
         long currentTime = System.currentTimeMillis();
 
         // It gets the news from the Web Service if the last download
         // of the news has been performed more than FRESH_TIMEOUT value ago
-        if (currentTime - lastUpdate > (100*60*60)) {
-            Call<GamesApiResponse> newsResponseCall = newsApiService.getApiGames(application.getString(R.string.news_api_key));
-
-            newsResponseCall.enqueue(new Callback<GamesApiResponse>() {
-                @Override
-                public void onResponse(@NonNull Call<GamesApiResponse> call,
-                                       @NonNull Response<GamesApiResponse> response) {
-
-                    if (response.body() != null && response.isSuccessful() &&
-                            !response.body().getError().equals("error")) {
-                        List<Games> newsList = response.body().getResults();
-                        saveDataInDatabase(newsList);
-                    } else {
-                        responseCallback.onFailure(application.getString(R.string.error_retrieving_news));
-                    }
-                }
-
-                @Override
-                public void onFailure(@NonNull Call<GamesApiResponse> call, @NonNull Throwable t) {
-                    responseCallback.onFailure(t.getMessage());
-                }
-            });
+        if (currentTime - lastUpdate > FRESH_TIMEOUT) {
+            newsRemoteDataSource.getNews();
         } else {
-            Log.d(TAG, application.getString(R.string.data_read_from_local_database));
-            readDataFromDatabase(lastUpdate);
+            newsLocalDataSource.getNews();
         }
+        return allNewsMutableLiveData;
     }
 
     @Override
     public void updateNews(Games news) {
-        GamesRoomDatabase.databaseWriteExecutor.execute(() -> {
-            newsDao.updateSingleFavoriteNews(news);
-            responseCallback.onNewsFavoriteStatusChanged(news);
-        });
-
+        newsLocalDataSource.updateNews(news);
     }
 
     @Override
-    public void getFavoriteNews() {
-        GamesRoomDatabase.databaseWriteExecutor.execute(() -> {
-            responseCallback.onSuccess(newsDao.getFavoriteNews(), System.currentTimeMillis());
-        });
+    public MutableLiveData<Result> getFavoriteNews() {
+        newsLocalDataSource.getFavoriteNews();
+        return favoriteNewsMutableLiveData;
     }
 
     @Override
     public void deleteFavoriteNews() {
-        GamesRoomDatabase.databaseWriteExecutor.execute(() -> {
-            List<Games> favoriteNews = newsDao.getFavoriteNews();
-            for (Games games : favoriteNews) {
-                games.setFavorite(false);
-            }
-            newsDao.updateListFavoriteNews(favoriteNews);
-            responseCallback.onSuccess(newsDao.getFavoriteNews(), System.currentTimeMillis());
-        });
+        newsLocalDataSource.deleteFavoriteNews();
     }
 
-    private void saveDataInDatabase(List<Games> newsList) {
-        GamesRoomDatabase.databaseWriteExecutor.execute(() -> {
-            // Reads the news from the database
-            List<Games> allNews = newsDao.getAll();
+    @Override
+    public void onSuccessFromRemote(GamesApiResponse newsApiResponse, long lastUpdate) {
+        newsLocalDataSource.insertNews(newsApiResponse.getResults());
+    }
 
-            // Checks if the news just downloaded has already been downloaded earlier
-            // in order to preserve the news status (marked as favorite or not)
-            for (Games news : allNews) {
-                // This check works because News and NewsSource classes have their own
-                // implementation of equals(Object) and hashCode() methods
-                if (newsList.contains(news)) {
-                    // The primary key and the favorite status is contained only in the News objects
-                    // retrieved from the database, and not in the News objects downloaded from the
-                    // Web Service. If the same news was already downloaded earlier, the following
-                    // line of code replaces the the News object in newsList with the corresponding
-                    // News object saved in the database, so that it has the primary key and the
-                    // favorite status.
-                    newsList.set(newsList.indexOf(news), news);
+    @Override
+    public void onFailureFromRemote(Exception exception) {
+        Result.Error result = new Result.Error(exception.getMessage());
+        allNewsMutableLiveData.postValue(result);
+    }
+
+    @Override
+    public void onSuccessFromLocal(List<Games> newsList) {
+        Result.Success result = new Result.Success(new GamesApiResponse(newsList));
+        allNewsMutableLiveData.postValue(result);
+    }
+
+    @Override
+    public void onFailureFromLocal(Exception exception) {
+        Result.Error resultError = new Result.Error(exception.getMessage());
+        allNewsMutableLiveData.postValue(resultError);
+        favoriteNewsMutableLiveData.postValue(resultError);
+    }
+
+    @Override
+    public void onNewsFavoriteStatusChanged(Games news, List<Games> favoriteNews) {
+        Result allNewsResult = allNewsMutableLiveData.getValue();
+
+        if (allNewsResult != null && allNewsResult.isSuccess()) {
+            List<Games> oldAllNews = ((Result.Success)allNewsResult).getData().getResults();
+            if (oldAllNews.contains(news)) {
+                oldAllNews.set(oldAllNews.indexOf(news), news);
+                allNewsMutableLiveData.postValue(allNewsResult);
+            }
+        }
+        favoriteNewsMutableLiveData.postValue(new Result.Success(new GamesApiResponse(favoriteNews)));
+    }
+
+    @Override
+    public void onNewsFavoriteStatusChanged(List<Games> news) {
+        favoriteNewsMutableLiveData.postValue(new Result.Success(new GamesApiResponse(news)));
+    }
+
+    @Override
+    public void onDeleteFavoriteNewsSuccess(List<Games> favoriteNews) {
+        Result allNewsResult = allNewsMutableLiveData.getValue();
+
+        if (allNewsResult != null && allNewsResult.isSuccess()) {
+            List<Games> oldAllNews = ((Result.Success)allNewsResult).getData().getResults();
+            for (Games news : favoriteNews) {
+                if (oldAllNews.contains(news)) {
+                    oldAllNews.set(oldAllNews.indexOf(news), news);
                 }
             }
+            allNewsMutableLiveData.postValue(allNewsResult);
+        }
 
-            // Writes the news in the database and gets the associated primary keys
-            List<Long> insertedNewsIds = newsDao.insertNewsList(newsList);
-            for (int i = 0; i < newsList.size(); i++) {
-                // Adds the primary key to the corresponding object News just downloaded so that
-                // if the user marks the news as favorite (and vice-versa), we can use its id
-                // to know which news in the database must be marked as favorite/not favorite
-                newsList.get(i).setId(insertedNewsIds.get(i));
-            }
-
-            responseCallback.onSuccess(newsList, System.currentTimeMillis());
-        });
-    }
-
-    /**
-     * Gets the news from the local database.
-     * The method is executed in a Runnable because the database access
-     * cannot been executed in the main thread.
-     */
-    private void readDataFromDatabase(long lastUpdate) {
-        GamesRoomDatabase.databaseWriteExecutor.execute(() -> {
-            responseCallback.onSuccess(newsDao.getAll(), lastUpdate);
-        });
+        if (favoriteNewsMutableLiveData.getValue() != null &&
+                favoriteNewsMutableLiveData.getValue().isSuccess()) {
+            favoriteNews.clear();
+            Result.Success result = new Result.Success(new GamesApiResponse(favoriteNews));
+            favoriteNewsMutableLiveData.postValue(result);
+        }
     }
 }
