@@ -42,7 +42,7 @@ public class PreferitiFragment extends Fragment {
      * Use this factory method to create a new instance of
      * this fragment.
      *
-     * @return A new instance of fragment CountryNewsFragment.
+     * @return A new instance of fragment FavoriteNewsFragment.
      */
     public static PreferitiFragment newInstance() {
         return new PreferitiFragment();
@@ -68,13 +68,15 @@ public class PreferitiFragment extends Fragment {
         requireActivity().addMenuProvider(new MenuProvider() {
             @Override
             public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater menuInflater) {
-                menu.clear();
             }
 
             @Override
             public boolean onMenuItemSelected(@NonNull MenuItem menuItem) {
+
                 return false;
             }
+            // Use getViewLifecycleOwner() to avoid that the listener
+            // associated with a menu icon is called twice
         }, getViewLifecycleOwner(), Lifecycle.State.RESUMED);
 
         progressBar = view.findViewById(R.id.progress_bar);
@@ -90,6 +92,7 @@ public class PreferitiFragment extends Fragment {
         listViewFavNews.setAdapter(newsListAdapter);
 
         progressBar.setVisibility(View.VISIBLE);
+
         // Observe the LiveData associated with the MutableLiveData containing the favorite news
         // returned by the method getFavoriteNewsLiveData() of NewsViewModel class.
         // Pay attention to which LifecycleOwner you give as value to

@@ -12,7 +12,7 @@ import java.util.List;
 public interface GamesCallback {
     void onSuccessFromRemote(GamesApiResponse newsApiResponse, long lastUpdate);
     void onFailureFromRemote(Exception exception);
-    void onSuccessFromLocal(List<Games> newsList);
+    void onSuccessFromLocal(GamesApiResponse newsApiResponse);
     void onFailureFromLocal(Exception exception);
     void onNewsFavoriteStatusChanged(Games news, List<Games> favoriteNews);
     void onNewsFavoriteStatusChanged(List<Games> news);

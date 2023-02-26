@@ -1,8 +1,7 @@
 package com.example.nuovagames.source;
 
 import com.example.nuovagames.model.Games;
-
-import java.util.List;
+import com.example.nuovagames.model.GamesApiResponse;
 
 
 /**
@@ -20,5 +19,5 @@ public abstract class BaseNewsLocalDataSource {
     public abstract void getFavoriteNews();
     public abstract void updateNews(Games news);
     public abstract void deleteFavoriteNews();
-    public abstract void insertNews(List<Games> newsList);
+    public abstract void insertNews(GamesApiResponse newsList);
 }

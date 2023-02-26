@@ -8,6 +8,7 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.lifecycle.MutableLiveData;
 
+import com.example.nuovagames.GamesRoomDatabase;
 import com.example.nuovagames.R;
 import com.example.nuovagames.ResponseCallback;
 import com.example.nuovagames.ServiceLocator;
@@ -47,22 +48,21 @@ public class GamesRepository implements IGamesRepository, GamesCallback {
     }
 
     @Override
-    public MutableLiveData<Result> fetchNews(long lastUpdate) {
+    public MutableLiveData<Result> fetchNews(int offset, long lastUpdate) {
         long currentTime = System.currentTimeMillis();
 
         // It gets the news from the Web Service if the last download
         // of the news has been performed more than FRESH_TIMEOUT value ago
-        if (currentTime - lastUpdate > FRESH_TIMEOUT) {
-            newsRemoteDataSource.getNews();
+        if (currentTime - lastUpdate < FRESH_TIMEOUT) {
+            newsRemoteDataSource.getNews(offset);
         } else {
             newsLocalDataSource.getNews();
         }
         return allNewsMutableLiveData;
     }
 
-    @Override
-    public void updateNews(Games news) {
-        newsLocalDataSource.updateNews(news);
+    public void fetchNews(int offset) {
+        newsRemoteDataSource.getNews(offset);
     }
 
     @Override
@@ -72,13 +72,19 @@ public class GamesRepository implements IGamesRepository, GamesCallback {
     }
 
     @Override
+    public void updateNews(Games news) {
+        newsLocalDataSource.updateNews(news);
+    }
+
+    @Override
     public void deleteFavoriteNews() {
         newsLocalDataSource.deleteFavoriteNews();
     }
 
     @Override
     public void onSuccessFromRemote(GamesApiResponse newsApiResponse, long lastUpdate) {
-        newsLocalDataSource.insertNews(newsApiResponse.getResults());
+        newsLocalDataSource.insertNews(newsApiResponse);
+        Log.e(TAG, String.valueOf(lastUpdate));
     }
 
     @Override
@@ -88,9 +94,17 @@ public class GamesRepository implements IGamesRepository, GamesCallback {
     }
 
     @Override
-    public void onSuccessFromLocal(List<Games> newsList) {
-        Result.Success result = new Result.Success(new GamesApiResponse(newsList));
-        allNewsMutableLiveData.postValue(result);
+    public void onSuccessFromLocal(GamesApiResponse newsApiResponse) {
+        if (allNewsMutableLiveData.getValue() != null && allNewsMutableLiveData.getValue().isSuccess()) {
+            List<Games> newsList = ((Result.Success)allNewsMutableLiveData.getValue()).getData().getResults();
+            newsList.addAll(newsApiResponse.getResults());
+            newsApiResponse.setResults(newsList);
+            Result.Success result = new Result.Success(newsApiResponse);
+            allNewsMutableLiveData.postValue(result);
+        } else {
+            Result.Success result = new Result.Success(newsApiResponse);
+            allNewsMutableLiveData.postValue(result);
+        }
     }
 
     @Override

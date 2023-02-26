@@ -12,7 +12,7 @@ public class GamesApiResponse implements Parcelable {
     private int number_of_total_results;
     private List<Games> results;
 
-    public GamesApiResponse() {}
+    public GamesApiResponse() {super();}
 
 
     public GamesApiResponse(List<Games> results) {

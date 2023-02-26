@@ -7,7 +7,9 @@ import com.example.nuovagames.model.Result;
 
 public interface IGamesRepository {
 
-    MutableLiveData<Result> fetchNews(long lastUpdate);
+    MutableLiveData<Result> fetchNews(int offset, long lastUpdate);
+
+    void fetchNews(int offset);
 
     MutableLiveData<Result> getFavoriteNews();
 

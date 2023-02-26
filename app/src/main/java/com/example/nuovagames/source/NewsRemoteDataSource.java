@@ -3,6 +3,7 @@ package com.example.nuovagames.source;
 
 import static com.example.nuovagames.Constanti.API_KEY_ERROR;
 import static com.example.nuovagames.Constanti.RETROFIT_ERROR;
+import static com.example.nuovagames.Constanti.TOP_HEADLINES_PAGE_SIZE_VALUE;
 
 import androidx.annotation.NonNull;
 
@@ -28,8 +29,9 @@ public class NewsRemoteDataSource extends BaseNewsRemoteDataSource {
     }
 
     @Override
-    public void getNews() {
-        Call<GamesApiResponse> newsResponseCall = newsApiService.getApiGames(apiKey);
+    public void getNews(int offset) {
+        Call<GamesApiResponse> newsResponseCall = newsApiService.getApiGames(apiKey,
+                TOP_HEADLINES_PAGE_SIZE_VALUE, offset);
 
         newsResponseCall.enqueue(new Callback<GamesApiResponse>() {
             @Override
@@ -39,6 +41,7 @@ public class NewsRemoteDataSource extends BaseNewsRemoteDataSource {
                 if (response.body() != null && response.isSuccessful() &&
                         !response.body().getError().equals("error")) {
                     newsCallback.onSuccessFromRemote(response.body(), System.currentTimeMillis());
+                    long temp = System.currentTimeMillis();
 
                 } else {
                     newsCallback.onFailureFromRemote(new Exception(API_KEY_ERROR));

@@ -14,6 +14,7 @@ public interface GamesApiService {
 
     @GET("api/games/?format=json")
     Call<GamesApiResponse> getApiGames(
-            @Query("api_key") String key
-    );
+            @Query("api_key") String key,
+            @Query("limit") int limit,
+            @Query("offset") int offset);
 }

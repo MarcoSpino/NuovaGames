@@ -11,4 +11,31 @@
     <string name="fav_content_description">fav_descr</string>
     <string name="api_key_error">api error</string>
     <string name="unexpected_error">error boh</string>
+
+    <string name="france">France</string>
+    <string name="italy">Italy</string>
+    <string name="germany">Germany</string>
+    <string name="united_kingdom">United Kingdom</string>
+    <string name="united_states">United States</string>
+
+
+    <string-array name="country_array">
+        <item>@string/france</item>
+        <item>@string/germany</item>
+        <item>@string/italy</item>
+        <item>@string/united_kingdom</item>
+        <item>@string/united_states</item>
+    </string-array>
+
+
+    <string name="business">Business</string>
+    <string name="entertainment">Entertainment</string>
+    <string name="general">General</string>
+    <string name="health">Health</string>
+    <string name="science">Science</string>
+    <string name="sports">Sports</string>
+    <string name="technology">Technology</string>
+    <string name="next">Next</string>
+    <string name="alert_text_country_of_interest">alert_text_country_of_interest</string>
+    <string name="alert_text_topic_of_interest">alert_text_topic_of_interest</string>
 </resources>

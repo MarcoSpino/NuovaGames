@@ -9,8 +9,6 @@ import androidx.room.Embedded;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
-import com.google.gson.annotations.SerializedName;
-
 import java.util.Objects;
 
 @Entity
@@ -29,7 +27,7 @@ public class Games implements Parcelable {
     @ColumnInfo(name = "is_favorite")
     private boolean isFavorite;
 
-    public Games() {}
+    public Games(String mario_rossi, String s, GamesImage uniMiB, String toString) {}
 
     public Games(long id, String name, GamesImage image, String original_release_date, boolean isFavorite) {
         this.id = id;

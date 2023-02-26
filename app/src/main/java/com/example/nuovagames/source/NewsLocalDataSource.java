@@ -2,12 +2,11 @@ package com.example.nuovagames.source;
 
 import static com.example.nuovagames.Constanti.UNEXPECTED_ERROR;
 
-import androidx.room.RoomDatabase;
-
 import com.example.nuovagames.GamesRoomDatabase;
 import com.example.nuovagames.database.GamesDao;
 
 import com.example.nuovagames.model.Games;
+import com.example.nuovagames.model.GamesApiResponse;
 
 import java.util.List;
 
@@ -19,9 +18,9 @@ public class NewsLocalDataSource extends BaseNewsLocalDataSource {
 
     private final GamesDao newsDao;
 
+
     public NewsLocalDataSource(GamesRoomDatabase newsRoomDatabase) {
         this.newsDao = newsRoomDatabase.newsDao();
-
     }
 
     /**
@@ -32,7 +31,10 @@ public class NewsLocalDataSource extends BaseNewsLocalDataSource {
     @Override
     public void getNews() {
         GamesRoomDatabase.databaseWriteExecutor.execute(() -> {
-            newsCallback.onSuccessFromLocal(newsDao.getAll());
+            //TODO Fix this instruction
+            GamesApiResponse newsApiResponse = new GamesApiResponse();
+            newsApiResponse.setResults(newsDao.getAll());
+            newsCallback.onSuccessFromLocal(newsApiResponse);
         });
     }
 
@@ -82,13 +84,14 @@ public class NewsLocalDataSource extends BaseNewsLocalDataSource {
      * Saves the news in the local database.
      * The method is executed with an ExecutorService defined in NewsRoomDatabase class
      * because the database access cannot been executed in the main thread.
-     * @param newsList the list of news to be written in the local database.
+     * @param newsApiResponse the list of news to be written in the local database.
      */
     @Override
-    public void insertNews(List<Games> newsList) {
+    public void insertNews(GamesApiResponse newsApiResponse) {
         GamesRoomDatabase.databaseWriteExecutor.execute(() -> {
             // Reads the news from the database
             List<Games> allNews = newsDao.getAll();
+            List<Games> newsList = newsApiResponse.getResults();
 
             if (newsList != null) {
 
@@ -116,7 +119,8 @@ public class NewsLocalDataSource extends BaseNewsLocalDataSource {
                     // to know which news in the database must be marked as favorite/not favorite
                     newsList.get(i).setId(insertedNewsIds.get(i));
                 }
-                newsCallback.onSuccessFromLocal(newsList);
+
+                newsCallback.onSuccessFromLocal(newsApiResponse);
             }
         });
     }

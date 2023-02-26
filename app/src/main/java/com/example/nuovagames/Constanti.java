@@ -10,5 +10,8 @@ public class Constanti {
     public static final String API_KEY_ERROR = "api_key_error";
     public static final String UNEXPECTED_ERROR = "unexpected_error";
 
+    public static final int TOP_HEADLINES_PAGE_SIZE_VALUE = 10;
+    public static final String EXTRA_BUTTON_PRESSED_COUNTER_KEY = "BUTTON_PRESSED_COUNTER_KEY";
+
     public static final int FRESH_TIMEOUT = 60*60*1000; // 1 hour in milliseconds
 }
