@@ -1,11 +1,8 @@
 package com.example.nuovagames;
 
-import static com.example.nuovagames.Constanti.LAST_UPDATE;
 import static com.example.nuovagames.Constanti.TOP_HEADLINES_PAGE_SIZE_VALUE;
 
-import android.app.Application;
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
@@ -17,6 +14,7 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
+import androidx.navigation.ui.NavigationUI;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -27,14 +25,12 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ProgressBar;
 
 import com.example.nuovagames.adapter.NewsRecyclerViewAdapter;
 import com.example.nuovagames.databinding.FragmentHomeBinding;
 import com.example.nuovagames.model.Games;
 import com.example.nuovagames.model.GamesApiResponse;
 import com.example.nuovagames.model.Result;
-import com.example.nuovagames.repository.GamesRepository;
 import com.example.nuovagames.repository.IGamesRepository;
 import com.google.android.material.snackbar.Snackbar;
 
@@ -54,6 +50,8 @@ public class HomeFragment extends Fragment {
     private NewsRecyclerViewAdapter newsRecyclerViewAdapter;
     private NewsViewModel newsViewModel;
 
+
+    private int n = 0;
     private int totalItemCount; // Total number of news
     private int lastVisibleItem; // The position of the last visible news item
     private int visibleItemCount; // Number or total visible news items
@@ -70,7 +68,7 @@ public class HomeFragment extends Fragment {
      * Use this factory method to create a new instance of
      * this fragment.
      *
-     * @return A new instance of fragment HomeFragment.
+     * @return A new instance of fragment CountryNewsFragment.
      */
     public static HomeFragment newInstance() {
         return new HomeFragment();
@@ -120,9 +118,9 @@ public class HomeFragment extends Fragment {
             }
         });
 
-        RecyclerView recyclerViewCountryNews =view.findViewById(R.id.recyclerview_country_news);
+        RecyclerView recyclerViewCountryNews = view.findViewById(R.id.recyclerview_country_news);
         LinearLayoutManager layoutManager =
-                new WrapContentLinearLayoutManager(requireContext(),
+                new LinearLayoutManager(requireContext(),
                         LinearLayoutManager.VERTICAL, false);
 
         newsRecyclerViewAdapter = new NewsRecyclerViewAdapter(newsList,
@@ -142,7 +140,7 @@ public class HomeFragment extends Fragment {
         recyclerViewCountryNews.setLayoutManager(layoutManager);
         recyclerViewCountryNews.setAdapter(newsRecyclerViewAdapter);
 
-        long lastUpdate = System.currentTimeMillis();
+        String lastUpdate = String.valueOf(System.currentTimeMillis());
 
 
         fragmentCountryNewsBinding.progressBar.setVisibility(View.VISIBLE);
@@ -154,7 +152,7 @@ public class HomeFragment extends Fragment {
         // In this case, getViewLifecycleOwner() refers to
         // androidx.fragment.app.FragmentViewLifecycleOwner and not to the Fragment itself.
         // You can read more details here: https://stackoverflow.com/a/58663143/4255576
-        newsViewModel.getNews(Long.parseLong(String.valueOf(lastUpdate))).observe(getViewLifecycleOwner(),
+        newsViewModel.getNews(Long.parseLong(lastUpdate)).observe(getViewLifecycleOwner(),
                 result -> {
                     if (result.isSuccess()) {
 
@@ -186,8 +184,8 @@ public class HomeFragment extends Fragment {
                                     newsList.remove(newsList.get(i));
                                 }
                             }
-                            int startIndex = (newsViewModel.getOffset() * TOP_HEADLINES_PAGE_SIZE_VALUE) -
-                                    TOP_HEADLINES_PAGE_SIZE_VALUE;
+                            int startIndex = (newsViewModel.getOffset() - 1);
+                            Log.e(TAG, String.valueOf(startIndex));
                             for (int i = startIndex; i < fetchedNews.size(); i++) {
                                 newsList.add(fetchedNews.get(i));
                             }
@@ -233,11 +231,10 @@ public class HomeFragment extends Fragment {
                             newsViewModel.setLoading(true);
                             newsList.add(null);
                             newsRecyclerViewAdapter.notifyItemRangeInserted(newsList.size(),
-                                    newsList.size() + 1);
+                                    newsList.size() + (n + 1) * (TOP_HEADLINES_PAGE_SIZE_VALUE));
 
-                            int boh = newsList.size();
-                            Log.e(TAG, String.valueOf(boh));
-                            int page = newsViewModel.getOffset() + boh;
+
+                            int page = newsViewModel.getOffset() + (n + 1) * (TOP_HEADLINES_PAGE_SIZE_VALUE);
                             Log.e(TAG, String.valueOf(page));
                             newsViewModel.setOffset(page);
                             newsViewModel.fetchNews();
