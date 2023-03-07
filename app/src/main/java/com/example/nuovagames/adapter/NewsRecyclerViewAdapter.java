@@ -114,8 +114,9 @@ public class NewsRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView.V
             textViewTitle.setText(news.getName());
             textViewDate.setText(news.getOriginal_release_date());
             setImageViewFavoriteNews(newsList.get(getAdapterPosition()).isFavorite());
+            String imag2 = String.valueOf(news.getImage());
             Glide.with(application)
-                    .load(news.getOriginal_release_date())
+                    .load(imag2)
                     .placeholder(R.drawable.baseline_arrow_circle_down_24)
                     .into(imageViewNewsCoverImage);
         }

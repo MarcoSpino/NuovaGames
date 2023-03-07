@@ -54,9 +54,7 @@ public class GamesImage implements Parcelable {
 
     @Override
     public String toString() {
-        return "GamesImage{" +
-                "original_url='" + original_url + '\'' +
-                '}';
+        return original_url;
     }
 
     @Override

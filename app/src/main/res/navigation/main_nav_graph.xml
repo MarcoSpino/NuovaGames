@@ -10,6 +10,10 @@
         android:name="com.example.nuovagames.HomeFragment"
         android:label="dsfsdd"
         tools:layout="@layout/fragment_home" >
+        <action
+            android:id="@+id/action_fragment_home_to_dettaglioActivity"
+            app:destination="@id/dettaglioGamesActivity"
+            app:popUpTo="@id/fragment_home" />
     </fragment>
     <fragment
         android:id="@+id/fragment_ricerca"
@@ -26,4 +30,12 @@
         android:name="com.example.nuovagames.ProfiloFragment"
         android:label="imp"
         tools:layout="@layout/fragment_profilo" />
+    <activity
+        android:id="@+id/dettaglioGamesActivity"
+        android:name="com.example.nuovagames.DettaglioActivity"
+        android:label="DettaglioGamesActivity" >
+        <argument
+            android:name="games"
+            app:argType="com.example.nuovagames.model.Games" />
+    </activity>
 </navigation>
