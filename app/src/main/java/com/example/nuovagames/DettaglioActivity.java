@@ -26,7 +26,7 @@ public class DettaglioActivity extends AppCompatActivity {
         setContentView(view);
 
         Games games = DettaglioActivityArgs.fromBundle(getIntent().getExtras()).getGames();
-        Log.e(TAG, String.valueOf(games));
+        //Log.e(TAG, String.valueOf(games));
 
         activityDettaglioBinding.textviewNewsTitle.setText(games.getName());
     }
