@@ -2,6 +2,7 @@ package com.example.nuovagames;
 
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -20,15 +21,14 @@ public class DettaglioActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_dettaglio);
-
-        name.findViewById(R.id.textview_news_title);
+        activityDettaglioBinding = ActivityDettaglioBinding.inflate(getLayoutInflater());
+        View view = activityDettaglioBinding.getRoot();
+        setContentView(view);
 
         Games games = DettaglioActivityArgs.fromBundle(getIntent().getExtras()).getGames();
-
-
         Log.e(TAG, String.valueOf(games));
 
-        name.setText(games.getName());
+        activityDettaglioBinding.textviewNewsTitle.setText(games.getName());
     }
 
 

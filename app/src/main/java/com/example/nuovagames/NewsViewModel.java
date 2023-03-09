@@ -27,7 +27,7 @@ public class NewsViewModel extends ViewModel {
 
     public NewsViewModel(IGamesRepository iNewsRepositoryWithLiveData) {
         this.newsRepositoryWithLiveData = iNewsRepositoryWithLiveData;
-        this.page = 1;
+        this.page = 0;
         this.totalResults = 0;
         this.firstLoading = true;
     }
